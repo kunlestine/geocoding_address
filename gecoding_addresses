@@ -1,0 +1,29 @@
+import csv
+from geopy.geocoders import Nominatim
+from retry import retry
+
+
+# Initialize the geocoder
+geolocator = Nominatim(user_agent="my_geocoder", timeout=10)
+
+@retry(tries=3, delay=1)
+# Function to geocode an address
+def geocode_address(address):
+    location = geolocator.geocode(address)
+    if location:
+        return location.latitude, location.longitude
+    return None, None
+
+# Read the CSV file and write the coordinates to a new file
+with open("C:\\Users\\adeoy\\Documents\\house_fellowship_centers_ori.csv", mode='r') as file:
+    csv_reader = csv.DictReader(file)
+    fieldnames = csv_reader.fieldnames + ['Latitude', 'Longitude']
+    with open('C:\\Users\\adeoy\\Documents\\fellowship_output.csv', mode='w', newline='') as output_file:
+        csv_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+        csv_writer.writeheader()
+        for row in csv_reader:
+            address = row['Address']
+            lat, lng = geocode_address(address)
+            row['Latitude'] = lat
+            row['Longitude'] = lng
+            csv_writer.writerow(row)
